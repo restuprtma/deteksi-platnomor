@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
-
 class MediaSelector extends StatelessWidget {
   final File? imageFile;
   final Function(File) onImageSelected;
@@ -37,35 +36,29 @@ class MediaSelector extends StatelessWidget {
   }
 
   Future<File?> _cropImage(String imagePath) async {
-    try{
-    final croppedFile = await ImageCropper().cropImage(
-      sourcePath: imagePath,
-      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Edit Foto',
-          toolbarColor: Colors.blue,
-          toolbarWidgetColor: Colors.white,
-          lockAspectRatio: false,
-          hideBottomControls: false,
-          cropGridRowCount: 3,
-          cropGridColumnCount: 3,
-        ),
-        IOSUiSettings(
-          title: 'Edit Foto',
-        ),
-      ],
-    );
+    try {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: imagePath,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Foto Plat',
+            toolbarColor: Colors.blue,
+            toolbarWidgetColor: Colors.white,
+            lockAspectRatio: false,
+            hideBottomControls: false,
+          ),
+          IOSUiSettings(title: 'Crop Foto Plat', aspectRatioLockEnabled: false),
+        ],
+      );
 
-    if (croppedFile == null) return null;
-    return File(croppedFile.path);
+      if (croppedFile == null) return null;
+      return File(croppedFile.path);
+    } catch (e) {
+      debugPrint('Error cropping image: $e');
+      return null;
+    }
   }
 
-  catch (e) {
-  debugPrint('Error cropping image: $e');
-  return null;
-  }
-}
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -78,7 +71,7 @@ class MediaSelector extends StatelessWidget {
             color: Colors.grey.withOpacity(0.2),
             blurRadius: 5,
             spreadRadius: 1,
-          )
+          ),
         ],
       ),
       child: Column(
@@ -91,9 +84,9 @@ class MediaSelector extends StatelessWidget {
             child: imageFile != null
                 ? Image.file(imageFile!, fit: BoxFit.contain)
                 : const Text(
-              "Belum ada gambar",
-              style: TextStyle(color: Colors.grey),
-            ),
+                    "Belum ada gambar",
+                    style: TextStyle(color: Colors.grey),
+                  ),
           ),
 
           const Divider(height: 1),

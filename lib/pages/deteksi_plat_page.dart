@@ -5,7 +5,6 @@ import 'package:deteksiplat/components/navbar.dart';
 import 'package:deteksiplat/pages/akun_page.dart';
 import 'package:flutter/material.dart';
 
-
 class DeteksiPlatPage extends StatefulWidget {
   const DeteksiPlatPage({super.key});
 
@@ -20,7 +19,8 @@ class _DeteksiPlatPageState extends State<DeteksiPlatPage> {
   String _akurasiCnn = "";
   String _akurasiOverall = "";
   bool _sudahDeteksi = false;
-
+  bool _isLoading = false;
+  bool _isError = false;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,8 @@ class _DeteksiPlatPageState extends State<DeteksiPlatPage> {
         selectedIndex: 0,
         onDeteksi: () {}, // tetap di halaman ini
         onAkun: () {
-          Navigator.push(context,
+          Navigator.push(
+            context,
             MaterialPageRoute(builder: (_) => const AkunPage()),
           );
         },
@@ -59,7 +60,11 @@ class _DeteksiPlatPageState extends State<DeteksiPlatPage> {
                 children: [
                   Row(
                     children: const [
-                      Icon(Icons.info_outline, color: Color(0xFF4285F4), size: 22),
+                      Icon(
+                        Icons.info_outline,
+                        color: Color(0xFF4285F4),
+                        size: 22,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         "Cara Kerja",
@@ -76,7 +81,7 @@ class _DeteksiPlatPageState extends State<DeteksiPlatPage> {
 
                   Text(
                     "Ambil atau unggah foto plat nomor Anda dengan jarak yang pas agar terlihat jelas. "
-                        "Sistem kami akan mendeteksi plat nomor dan menampilkan hasilnya beserta akurasi.",
+                    "Sistem kami akan mendeteksi plat nomor dan menampilkan hasilnya beserta akurasi.",
                     style: TextStyle(
                       fontSize: 14,
                       height: 1.4,
@@ -101,21 +106,32 @@ class _DeteksiPlatPageState extends State<DeteksiPlatPage> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: _prosesDeteksi,
+                onPressed: _isLoading ? null : _prosesDeteksi,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4285F4),
+                  backgroundColor: _isLoading
+                      ? Colors.grey
+                      : const Color(0xFF4285F4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  'Deteksi',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : const Text(
+                        'Deteksi',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
 
@@ -136,7 +152,10 @@ class _DeteksiPlatPageState extends State<DeteksiPlatPage> {
               const SizedBox(height: 10),
 
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20,
+                  horizontal: 20,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15),
@@ -151,19 +170,23 @@ class _DeteksiPlatPageState extends State<DeteksiPlatPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      _hasilPlat,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        _hasilPlat,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: _isError ? Colors.red : Colors.black,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
 
                     const SizedBox(width: 10),
 
-                    const Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
+                    Icon(
+                      _isError ? Icons.error : Icons.check_circle,
+                      color: _isError ? Colors.red : Colors.green,
                       size: 28,
                     ),
                   ],
@@ -173,7 +196,10 @@ class _DeteksiPlatPageState extends State<DeteksiPlatPage> {
               const SizedBox(height: 15),
 
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20,
+                  horizontal: 20,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15),
@@ -198,7 +224,7 @@ class _DeteksiPlatPageState extends State<DeteksiPlatPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10,),
+                    const SizedBox(height: 10),
                     _rowAkurasi("SVM", _akurasiSvm),
                     const SizedBox(height: 8),
                     _rowAkurasi("CNN", _akurasiCnn),
@@ -229,20 +255,71 @@ class _DeteksiPlatPageState extends State<DeteksiPlatPage> {
   void _prosesDeteksi() async {
     if (_imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Pilih gambar dulu mas!")),
+        const SnackBar(
+          content: Text("Pilih gambar dulu mas!"),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
 
-    final hasil = await DeteksiPlatProses.prosesDeteksi(_imageFile!);
-
     setState(() {
-      _hasilPlat = hasil["hasil"] ?? "";
-      _akurasiSvm = hasil["svm"] ?? "";
-      _akurasiCnn = hasil["cnn"] ?? "";
-      _akurasiOverall = hasil["overall"] ?? "";
-      _sudahDeteksi = true;
+      _isLoading = true;
+      _isError = false;
+      _sudahDeteksi = false;
     });
+
+    try {
+      final hasil = await DeteksiPlatProses.prosesDeteksi(_imageFile!);
+
+      final isErrorResult =
+          hasil["hasil"] == "Error" ||
+          hasil["hasil"] == "Server Error" ||
+          hasil["hasil"] == "Koneksi Error";
+
+      setState(() {
+        _hasilPlat = hasil["hasil"] ?? "";
+        _akurasiSvm = hasil["svm"] ?? "";
+        _akurasiCnn = hasil["cnn"] ?? "";
+        _akurasiOverall = hasil["overall"] ?? "";
+        _sudahDeteksi = true;
+        _isError = isErrorResult;
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isErrorResult
+                  ? "Gagal mendeteksi plat: ${hasil['overall']}"
+                  : "Berhasil mendeteksi plat!",
+            ),
+            backgroundColor: isErrorResult ? Colors.red : Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _hasilPlat = "Error";
+        _akurasiSvm = "-";
+        _akurasiCnn = "-";
+        _akurasiOverall = e.toString();
+        _sudahDeteksi = true;
+        _isError = true;
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Terjadi kesalahan: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _rowAkurasi(String label, String value) {
@@ -254,7 +331,4 @@ class _DeteksiPlatPageState extends State<DeteksiPlatPage> {
       ],
     );
   }
-
-
-
 }
