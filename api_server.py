@@ -7,7 +7,7 @@ import sys
 import cv2
 import numpy as np
 
-sys.path.insert(0, r"e:\PCVK x ML")
+# sys.path.insert(0, r"e:\PCVK x ML")
 
 from main_compare import SVMModel, CNNModel, split_characters, correct_plate_context
 
@@ -24,7 +24,7 @@ app.add_middleware(
 svm_model = None
 cnn_model = None
 
-DATASET_PATH = r"e:\PCVK x ML\caasperart\haarcascadeplatenumber\versions\10\DatasetCharacter\DatasetCharacter"
+DATASET_PATH = r"D:\Semester 5\datasetPCVK\DatasetCharacter\DatasetCharacter"
 
 @app.on_event("startup")
 async def load_models():

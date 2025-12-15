@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class DeteksiPlatProses {
   // - Emulator Android: 10.0.2.2
   // - HP asli: IP WiFi komputer (contoh: 192.168.1.100)
-  static const String baseUrl = "http://10.0.2.2:8000";
+  static const String baseUrl = "http://192.168.1.5:8000";
 
   static Future<Map<String, String>> prosesDeteksi(File image) async {
     try {
